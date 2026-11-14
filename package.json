@@ -1,0 +1,47 @@
+{
+  "name": "magpie-cf-media",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": { ".": "./index.mjs" },
+  "description": "Cloudflare Workers AI's non-chat models for Magpie: whisper (ASR), flux (image generation), melotts/aura (speech), bge (embeddings) and clef (System One decisions) — discovered live from the Workers AI model search API instead of being hard-coded.",
+  "keywords": [
+    "magpie",
+    "magpie-plugin",
+    "opencode",
+    "cloudflare",
+    "workers-ai",
+    "media",
+    "whisper",
+    "flux",
+    "clef",
+    "systemone"
+  ],
+  "license": "MIT",
+  "author": "jiangxh",
+  "homepage": "https://git.jxh.cc.cd/jiangxh/magpie-cf-media",
+  "repository": {
+    "type": "git",
+    "url": "git+https://git.jxh.cc.cd/jiangxh/magpie-cf-media.git"
+  },
+  "bugs": {
+    "url": "https://git.jxh.cc.cd/jiangxh/magpie-cf-media/issues"
+  },
+  "files": [
+    "index.mjs",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "magpie": {
+    "maxConcurrency": 3,
+    "icon": "https://www.cloudflare.com/favicon.ico"
+  },
+  "scripts": {
+    "verify:discovery": "node verify-discovery.mjs",
+    "verify:live": "node verify-live.mjs"
+  }
+}
