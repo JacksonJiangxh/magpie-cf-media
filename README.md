@@ -81,10 +81,20 @@ MAGPIE_CONFIG_DIR=<magpie config> node verify-live.mjs
 
 ## Sign-in
 
-Nothing to enter either: the sign-in it declares is a fallback for adding a
-sixth account here alone, and the usual answer is to sign in to the
-Cloudflare plugin instead — the accounts it holds are read from the store
-(`magpie plugin login cf-media` also works when you do want one here).
+Nothing to type, ever. The credentials are the ones the Cloudflare Workers
+AI plugin already holds: `accounts.mjs` reads them from magpie's store
+(`plugin-auth.json`) and every request is handed all of them.
+
+The sign-in this plugin declares is a **keyless** one — no field, no
+prompt — whose `authorize` picks the first stored Cloudflare account, so
+the only thing a user ever does is press Sign in once (or run
+`magpie plugin login cf-media`, which asks nothing). A method is needed at
+all because magpie keeps a provider with no sign-in out of its routing
+catalog: an empty `methods` lists the models but refuses every call
+("magpie knows no cf-media/… model"). The copy that sign-in saves is only
+what makes the host count the provider as signed in; requests go through
+the whole stored pool. With no Cloudflare account signed in there, the
+sign-in says so and nothing is served until the Cloudflare plugin has one.
 
 ## Licence
 

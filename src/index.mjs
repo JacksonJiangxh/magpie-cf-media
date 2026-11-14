@@ -129,52 +129,40 @@ export async function CFMediaPlugin(input, options = {}) {
     auth: {
       provider: CF_MEDIA_ID,
       maxConcurrency: 3,
-      // The accounts magpie already holds are read from the store, so this
-      // sign-in is only what a user reaches for when there are none (or to
-      // add a sixth account here alone). The host needs at least one method
-      // to call a plugin a provider at all, so this one is here even though
-      // the usual answer is "nothing to enter".
+      // One keyless method: nothing to type. Its `authorize` reads an
+      // account the Cloudflare Workers AI plugin already holds, so the
+      // sign-in is a single click with no field (magpie's `keyless`,
+      // provider-plugins.md: "GUI and CLI skip personal-key entry for it").
+      // A method is needed at all because the host lists a provider with
+      // no sign-in outside the routing catalog — an empty `methods` serves
+      // models but refuses every call ("magpie knows no ... model").
       methods: [
         {
           type: "api",
-          label: "Cloudflare API Token (reads the Workers AI plugin's sign-ins; enter one only to add another)",
-          prompts: [
-            {
-              type: "password",
-              key: "token",
-              message: "API Token",
-              placeholder: "cfut_… (Workers AI:Read)",
-              validate: (v) => (v && v.trim() ? undefined : "an API token, or leave this sign-in unused"),
-            },
-            {
-              type: "text",
-              key: "accountId",
-              message: "Account ID",
-              placeholder: "32 hex characters",
-              validate: (v) =>
-                /^[0-9a-f]{32}$/i.test(String(v ?? "").trim()) ? undefined : "Account ID must be 32 hex characters",
-            },
-          ],
-          async authorize(input) {
-            const obj = input && typeof input === "object" ? input : {};
-            const token = String(obj.token ?? obj.key ?? "").trim();
-            const accountId = String(obj.accountId ?? "").trim().toLowerCase();
-            if (!token || !/^[0-9a-f]{32}$/.test(accountId)) {
-              return { type: "failed", error: "a token and a 32-character account ID are both needed" };
+          keyless: true,
+          label: "Cloudflare accounts from the Workers AI plugin (nothing to enter)",
+          async authorize() {
+            const all = accounts();
+            if (!all.length) {
+              return {
+                type: "failed",
+                error: "sign in to the Cloudflare Workers AI plugin first: cf-media reads the accounts it holds",
+              };
             }
-            return { type: "success", key: token, metadata: { accountId } };
+            const first = all[0];
+            return { type: "success", key: first.key, metadata: { accountId: first.accountId } };
           },
         },
       ],
       async loader(getAuth, _provider) {
-        // The store's accounts first (the CF plugin's five), then whatever
-        // was signed in here, so both are served and no token is entered
-        // twice.
+        // The store's accounts are what is served — never the one
+        // `authorize` saved, which is a copy of the first of them kept only
+        // so the host counts this provider as signed in.
         const all = accounts();
-        const own = await getAuth().catch(() => undefined);
-        if (own && typeof own.key === "string" && /^[0-9a-f]{32}$/i.test(String(own.metadata?.accountId ?? ""))) {
-          const accountId = String(own.metadata.accountId).toLowerCase();
-          if (!all.some((a) => a.accountId === accountId)) {
+        if (!all.length) {
+          const own = await getAuth().catch(() => undefined);
+          if (own && typeof own.key === "string" && /^[0-9a-f]{32}$/i.test(String(own.metadata?.accountId ?? ""))) {
+            const accountId = String(own.metadata.accountId).toLowerCase();
             all.unshift({ id: CF_MEDIA_ID, key: own.key, accountId, label: accountId.slice(0, 6) });
           }
         }
